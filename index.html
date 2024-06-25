@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>My Google Map</title>
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.14.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <h1>My Google Map</h1>
+    <div id="map"></div>
+    <h2 id="peopleCount">Total number of people in the bus: 0</h2>
+
+    <script>
+        // Your web app's Firebase configuration
+       var firebaseConfig = {
+            apiKey: "AIzaSyARxBEfULiQEXnOUIxziesQFCttwPWkWQk",
+            authDomain: "nodemcu-8de30.firebaseapp.com",
+            databaseURL: "https://nodemcu-8de30-default-rtdb.firebaseio.com",
+            projectId: "nodemcu-8de30",
+            storageBucket: "nodemcu-8de30.appspot.com",
+            messagingSenderId: "1074780892540",
+            appId: "1:1074780892540:web:69af2a3d53e9c4a2d248f9"
+        };
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        // Initialize variables
+        let map, marker;
+
+        function initMap() {
+            // Map options
+            var options = {
+                zoom: 14,
+                center: { lat: 5.40753, lng: 100.28799 }
+            }
+            // New map
+            map = new google.maps.Map(document.getElementById('map'), options);
+
+            // Add marker
+            marker = new google.maps.Marker({
+                position: { lat: 5.40753, lng: 100.28799 },
+                map: map
+            });
+
+            // Get coordinates from Firebase and update the marker
+            var database = firebase.database();
+            var ref = database.ref('GPS');
+            ref.on('value', (snapshot) => {
+                var data = snapshot.val();
+                console.log('Data from Firebase:', data); // Debug log
+                if (data && data.f_latitude !== undefined && data.f_longitude !== undefined) {
+                    var lat = data.f_latitude;
+                    var lng = data.f_longitude;
+                    var newPosition = { lat: lat, lng: lng };
+                    console.log('New Position:', newPosition); // Debug log
+                    marker.setPosition(newPosition);
+                    map.setCenter(newPosition);
+                } else {
+                    console.error('Invalid data format from Firebase'); // Debug log
+                }
+            });
+
+            // Get people count from Firebase and update the HTML
+            var peopleCountRef = database.ref('Bus/people_count');
+            peopleCountRef.on('value', (snapshot) => {
+                var count = snapshot.val();
+                document.getElementById('peopleCount').innerText = 'Total number of people in the bus: ' + count;
+            });
+        }
+    </script>
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBJC1_dI2vhaDf9v0kBayYZnrecFO_A2DI&callback=initMap">
+    </script>
+</body>
+</html>
